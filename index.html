@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Album Famille — QR vidéo</title>
+<style>
+body{margin:0;min-height:100vh;font-family:Arial,sans-serif;background:#f5f3ef;display:flex;align-items:center;justify-content:center;color:#222}
+.card{width:min(92%,560px);background:#fff;border-radius:22px;padding:34px;box-shadow:0 12px 40px rgba(0,0,0,.1);text-align:center}
+h1{margin:0 0 8px;font-size:28px}.intro{color:#777;margin:0 0 28px}
+input{width:100%;padding:15px 16px;border:1px solid #ddd;border-radius:12px;font-size:15px;outline:0}
+button{border:0;border-radius:12px;padding:14px 22px;margin-top:14px;font-size:16px;cursor:pointer;background:#222;color:#fff}
+button.secondary{background:#eee;color:#222}
+#result{display:none;margin-top:30px}#qrcode{display:inline-flex;padding:16px;background:#fff;border-radius:12px;border:1px solid #eee}
+#qrcode img,#qrcode canvas{display:block}.small{font-size:13px;color:#888;margin-top:16px;word-break:break-all}.error{color:#a00;margin-top:12px;font-size:14px}
+</style>
+</head>
+<body>
+<main class="card">
+<h1>Album Famille</h1>
+<p class="intro">Créer le QR code d'une vidéo</p>
+<input id="url" type="url" placeholder="Colle ici l’URL Cloudinary de la vidéo">
+<div id="error" class="error"></div>
+<button onclick="generate()">Créer le QR code</button>
+<section id="result">
+<div id="qrcode"></div><br>
+<button class="secondary" onclick="downloadQR()">Télécharger le QR code</button>
+<div id="shownUrl" class="small"></div>
+</section>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+function generate(){
+ const url=document.getElementById('url').value.trim(), error=document.getElementById('error'), box=document.getElementById('qrcode');
+ error.textContent=''; box.innerHTML='';
+ if(!url){error.textContent='Colle d’abord le lien de la vidéo.';return;}
+ try{new URL(url)}catch(e){error.textContent='Le lien ne semble pas être une URL valide.';return;}
+ new QRCode(box,{text:url,width:320,height:320,correctLevel:QRCode.CorrectLevel.H});
+ document.getElementById('shownUrl').textContent=url;
+ document.getElementById('result').style.display='block';
+}
+function downloadQR(){
+ const canvas=document.querySelector('#qrcode canvas'), img=document.querySelector('#qrcode img');
+ const dataUrl=canvas?canvas.toDataURL('image/png'):img?img.src:null;if(!dataUrl)return;
+ const a=document.createElement('a');a.href=dataUrl;a.download='QR-video-album-famille.png';a.click();
+}
+</script>
+</body>
+</html>
