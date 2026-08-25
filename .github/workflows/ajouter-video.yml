@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       url:
-        description: "URL directe Cloudinary de la vidéo"
+        description: https://res.cloudinary.com/mmv7ol50/video/upload/v1787440541/2026_-_Janvier_-_Tennis_2.mp4
         required: true
         type: string
 
