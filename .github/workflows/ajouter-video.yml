@@ -20,13 +20,18 @@ jobs:
       - name: Récupérer le dépôt
         uses: actions/checkout@v4
 
-      - name: Ajouter la vidéo
+      - name: Installer le générateur QR
+        run: |
+          python -m pip install "qrcode[pil]"
+
+      - name: Ajouter la vidéo et créer le QR
         env:
           VIDEO_URL: ${{ inputs.url }}
         run: |
           python - <<'PY'
           import json
           import os
+          import qrcode
 
           filename = "videos.json"
 
@@ -37,20 +42,48 @@ jobs:
           next_id = max(numbers, default=0) + 1
           new_id = f"{next_id:03d}"
 
+          permanent_url = f"https://mclicone.github.io/AlbumFamille/?v={new_id}"
+
           videos[new_id] = os.environ["VIDEO_URL"]
 
           with open(filename, "w", encoding="utf-8") as f:
               json.dump(videos, f, ensure_ascii=False, indent=2)
               f.write("\n")
 
-          print(f"Vidéo ajoutée avec l'identifiant {new_id}")
-          print(f"URL permanente : https://mclicone.github.io/AlbumFamille/?v={new_id}")
+          os.makedirs("qrcodes", exist_ok=True)
+
+          qr = qrcode.QRCode(
+              version=None,
+              error_correction=qrcode.constants.ERROR_CORRECT_H,
+              box_size=12,
+              border=4
+          )
+
+          qr.add_data(permanent_url)
+          qr.make(fit=True)
+
+          image = qr.make_image()
+          qr_file = f"qrcodes/{new_id}.png"
+          image.save(qr_file)
+
+          with open("video_result.txt", "w", encoding="utf-8") as f:
+              f.write(f"Identifiant : {new_id}\n")
+              f.write(f"URL permanente : {permanent_url}\n")
+              f.write(f"QR code : https://mclicone.github.io/AlbumFamille/qrcodes/{new_id}.png\n")
+
+          print(f"Vidéo créée : {new_id}")
+          print(f"URL permanente : {permanent_url}")
+          print(f"QR : https://mclicone.github.io/AlbumFamille/qrcodes/{new_id}.png")
           PY
 
-      - name: Enregistrer la modification
+      - name: Enregistrer les modifications
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add videos.json
-          git commit -m "Ajouter une vidéo"
+          git add videos.json qrcodes
+          git commit -m "Ajouter une vidéo et son QR"
           git push
+
+      - name: Résultat
+        run: |
+          cat video_result.txt >> "$GITHUB_STEP_SUMMARY"
