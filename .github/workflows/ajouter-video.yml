@@ -1,1 +1,56 @@
+name: Ajouter une vidéo
 
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "URL directe Cloudinary de la vidéo"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  ajouter:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Ajouter la vidéo
+        env:
+          VIDEO_URL: ${{ inputs.url }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+
+          filename = "videos.json"
+
+          with open(filename, "r", encoding="utf-8") as f:
+              videos = json.load(f)
+
+          numbers = [int(k) for k in videos.keys() if str(k).isdigit()]
+          next_id = max(numbers, default=0) + 1
+          new_id = f"{next_id:03d}"
+
+          videos[new_id] = os.environ["VIDEO_URL"]
+
+          with open(filename, "w", encoding="utf-8") as f:
+              json.dump(videos, f, ensure_ascii=False, indent=2)
+              f.write("\n")
+
+          print(f"Vidéo ajoutée avec l'identifiant {new_id}")
+          print(f"URL permanente : https://mclicone.github.io/AlbumFamille/?v={new_id}")
+          PY
+
+      - name: Enregistrer la modification
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add videos.json
+          git commit -m "Ajouter une vidéo"
+          git push
